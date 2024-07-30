@@ -29,7 +29,7 @@ class EmailWithAttachment():
             exit()
 
 
-    def sendMail(self, toAddr, subject, body, attachments):
+    def sendMail(self, toAddr, subject, body, attachments=None):
         if not self.s:
             print("SMTP CONNECTION ERROR.\nPlease establish connection by providing sendermail and app specific passphrase")
             exit()
@@ -44,28 +44,30 @@ class EmailWithAttachment():
         # attach the body with the msg instance
         msg.attach(MIMEText(body, 'html'))
 
-        for key, value in attachments.items():
-            try:
+        try:
+            for key, value in attachments.items():
                 att = open(value, "rb")
-            except:
-                print(f"Failed to open the attachment {value}")
-                exit()
+
+                p = MIMEBase('application', 'octet-stream')
+                # To change the payload into encoded form
+                p.set_payload((att).read())
                 
-            p = MIMEBase('application', 'octet-stream')
-            # To change the payload into encoded form
-            p.set_payload((att).read())
-            
-            # encode into base64
-            encoders.encode_base64(p)
+                # encode into base64
+                encoders.encode_base64(p)
 
-            ''' attachment adds the file to the mail.
-            filename gives information about the field: image, pdf etc.
-            So,include extension type in name.'''
+                ''' attachment adds the file to the mail.
+                filename gives information about the field: image, pdf etc.
+                So,include extension type in name.'''
 
-            #for attachments' name, key + extension of original image from value
-            attName = key + '.' + value.rsplit('.', 1)[-1]
-            p.add_header('Content-Disposition', "attachment; filename= %s" %attName)
-            msg.attach(p) 
+                #for attachments' name, key + extension of original image from value
+                attName = key + '.' + value.rsplit('.', 1)[-1]
+                p.add_header('Content-Disposition', "attachment; filename= %s" %attName)
+                msg.attach(p)
+        except AttributeError:
+            pass
+        except Exception as e:
+            print(f"Failed to open the attachment {value}")
+            exit()
 
         text = msg.as_string()
 

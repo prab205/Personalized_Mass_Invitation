@@ -1,0 +1,30 @@
+{
+    "mail":{
+        "senderAddress":"prabinpaudel43@gmail.com",
+        "passphraseFile":"resources/passphrase.txt",
+        "mailCsvFile":"resources/csv/demo.csv",
+        "csvMailHeader":"Email",
+        "csvNameHeader":"Full Name",
+        "prefixForName":"",
+        "attachments":{
+            "personal_invitation":"{{ generatedImageName.value }}",
+            "banner":"resources/images/Banner.jpg"
+        }
+    },
+    "image":{
+        "imageCreation": true,
+        "createOnlyImage": false,
+        "textForCreateOnlyImage": null,
+        "invitationSource":"resources/images/Invitation_Source.png",
+        "generatedImageName":"resources/images/Invitation1.png",
+        "viewGeneratedImage":false,
+        "overwriteIfExists": true,
+        "xCoordinate":null,
+        "yCoordinate":1360,
+        "rgb_color":[0,0,0],
+        "font": "resources/GrandHotel-Regular.ttf",
+        "fontSize":100,
+        "csvUserNameHeader":"Full Name",
+        "prefixToAdd":"Leo "
+    }
+}

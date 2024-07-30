@@ -1,17 +1,16 @@
 import os
+import json
 import time
 import pandas as pd
 from createImage import createInvitationCard
 from sendMail import EmailWithAttachment
 
-def sendMail(mailInvitationName, receiverMail, attachments):
-#********************** all variables ************************#
-    '''mail related'''
+def sendMail(mailInvitationName, receiverMail, attachments=None):
     subject = 'Invitation to Leo Khel Rangotsav'
     body = f'''<html>
 <head></head>
 <body>
-Respected <b>Leo {mailInvitationName}</b>,<br><br>
+Respected <b>{mailInvitationName}</b>,<br><br>
 
 Thank you for registering for <b>Leo Khel Rangotsav</b>. We're thrilled to have you as well as leo members of your club at the event and expect you to bring along energy, enthusiasm, and sportsmanship.<br><br>
 
@@ -35,54 +34,42 @@ Leo Club of Kathmandu Budigandaki<br>
 </body>
 </html>'''
 
-#********************** variables ended ************************#
-
-    if attachments:
-        mail.sendMail(receiverMail, subject, body, attachments)
-    else:
-        mail.sendMail(receiverMail, subject, body)
+    mail.sendMail(receiverMail, subject, body, attachments)
 
 
 if __name__ == '__main__':  
-    senderMail = 'your_mail@gmail.com'
-    passphraseFile = 'resources/passphrase.txt'
+    with open('variables.json') as varFiles:
+        variables = json.load(varFiles)
 
-    '''image related'''
-    imageSrc = 'images/Invitation_Source.png'
-    imageDest = 'Invitation1.png'
+    senderAddress, passphraseFile, mailCsvFile, csvMailHeader, csvNameHeader, prefixForName, attachments = variables['mail'].values()
 
-    textCordinates = (None, 1360) #center at X-axis
-    textColor = (0,0,0)
-
-    # put font=None for default font
-    font = 'resources/GrandHotel-Regular.ttf'
-    fontsize = 100
-
-    # testing of text placement in image
-    # final_image_location = createInvitationCard(srcImg=imageSrc, destImg=imageDest, text="Leo Prabin Paudel", cordinates=textCordinates, color=textColor, fontPath=font, fontSize=fontsize, display=True)
-
-    mailList = "resources/demo.csv" #inside 'resources' directory
+    if variables['image']['imageCreation']:
+        if variables['image']['createOnlyImage']:
+            _, _, textForCreateOnlyImage, invitationSource, generatedImageName, viewGeneratedImage, overwriteIfExists, xCoordinate, yCoordinate, rgb_color, font, fontSize, _, _ = variables['image'].values()
+            createInvitationCard(srcImg=invitationSource, text=textForCreateOnlyImage, destImg=generatedImageName, overwrite=overwriteIfExists, cordinates=(xCoordinate, yCoordinate), color=tuple(rgb_color), fontPath=font, fontSize=fontSize, display=True)
+            exit(-1)
+        else:
+            _, _, textForCreateOnlyImage, invitationSource, generatedImageName, viewGeneratedImage, overwriteIfExists, xCoordinate, yCoordinate, rgb_color, font, fontSize, csvUserNameHeader, prefixToAdd = variables['image'].values()
+            attachments['personal_invitation'] = generatedImageName
 
     with open(passphraseFile, 'r') as file:
         password = file.readline()
-        # you can simply enter your app specific password here
-        # https://myaccount.google.com/apppasswords
 
     mail = EmailWithAttachment()
-    mail.establishConnection(senderMail, password)
+    mail.establishConnection(senderAddress, password)
 
-    print(f"Reading from {mailList}")
+    print(f"Reading from {mailCsvFile}")
     time.sleep(2) #Intentional Delay for Verification
 
-    df = pd.read_csv(mailList)
+    df = pd.read_csv(mailCsvFile)
     for index, row in df.iterrows():
         try:
-            final_image_location = createInvitationCard(srcImg=imageSrc, destImg=imageDest, text="Leo" + row['Full Name'], cordinates=textCordinates, color=textColor, fontPath=font, fontSize=fontsize, display=False)
-            attachments = {"personal_invitation":final_image_location, "banner":'./images/Banner.jpg'}   
-            sendMail(row["Full Name"], row["Email"], attachments)
-            os.remove(final_image_location)
+            createInvitationCard(srcImg=invitationSource, text=prefixToAdd + row[csvUserNameHeader], destImg=generatedImageName, overwrite=overwriteIfExists, cordinates=(xCoordinate, yCoordinate), color=tuple(rgb_color), fontPath=font, fontSize=fontSize, display=viewGeneratedImage)  
+            sendMail(prefixForName + row[csvNameHeader], row[csvMailHeader], attachments)
+            os.remove(generatedImageName)
         except KeyError as e:
             print(f"Keyerror, {e} column mentioned at line {e.__traceback__.tb_lineno} doesnot exist in csv file")
+            exit(-1)
         except Exception as e:
             print(f"Exception occured on line {index+2}, ", e)
 
